@@ -1,7 +1,7 @@
 from . import app, models, session
 from .utility import get_model_instance_by_id, get_model_by_id
 from flask import request, jsonify
-from flask_login import login_required
+from flask_login import login_required, current_user
 from sqlalchemy.exc import IntegrityError
 
 @app.route('/providers', methods=["GET"])
@@ -35,7 +35,25 @@ def add_provider():
 @login_required
 @get_model_instance_by_id(models.Provider, "Provider doesn't exist")
 def get_provider(provider):
-    return jsonify(provider)
+    if current_user.is_admin:
+        return jsonify(provider)
+    # if provider, check if own profile
+    elif current_user.is_provider:
+        if current_user.id == provider.id: # if own profile add password
+            provider_data = provider.to_json()
+            provider_data['password'] = provider.password
+            return jsonify(provider_data)
+        return jsonify(provider)
+    # filter out other appointments that arent the patient's
+    provider_data = provider.to_json()
+    provider_appointments = provider_data.get('appointments', [])
+    filtered_appointments = []
+    for appointment in provider_appointments:
+        if appointment.patient_id == current_user.id:
+            filtered_appointments.append(appointment)
+    provider_data['appointments'] = filtered_appointments
+    return jsonify(provider_data)
+
 
 @app.route('/providers/<id>', methods=['DELETE'])
 @login_required

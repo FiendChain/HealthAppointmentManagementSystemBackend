@@ -29,6 +29,7 @@ class Appointment(Base, JSONable, RestfulModel):
         self.end_time = end_time
         self.reason = reason
         self.comment = comment
+        self.validate_time()
 
     # appointment times
     @property
@@ -45,10 +46,6 @@ class Appointment(Base, JSONable, RestfulModel):
             raise ValueError("Start time must be in the format \'{}\'".format(TIME_FORMAT))
         if time.minute != 0 and time.minute != 30:
             raise ValueError("Invalid start time, minutes must be 0 or 30")
-        elif self.end_time:
-            time_delta = self.end_time - time
-            if time_delta.seconds/60 != 30:
-                raise ValueError("Appointment must be a 30 minute slot") 
         self._start_time = time
 
     @property
@@ -65,11 +62,12 @@ class Appointment(Base, JSONable, RestfulModel):
             raise ValueError("End time must be in the format \'{}\'".format(TIME_FORMAT))
         if time.minute != 0 and time.minute != 30:
             raise ValueError("Invalid end time, minutes must be 0 or 30")
-        elif self.start_time:
-            time_delta = time - self.start_time
-            if time_delta.seconds/60 != 30:
-                raise ValueError("Appointment must be a 30 minute slot") 
         self._end_time = time
+
+    def validate_time(self):
+        time_delta = self.end_time - self.start_time
+        if time_delta.days != 0 or time_delta.seconds/60 != 30:
+            raise ValueError("Appointment must be a 30 minute slot") 
 
     # other properties
     @property

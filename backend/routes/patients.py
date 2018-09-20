@@ -7,12 +7,8 @@ from sqlalchemy.exc import IntegrityError
 @app.route('/patients', methods=["GET"])
 @login_required
 def get_patients():
-    if current_user.is_admin:
+    if current_user.is_admin or current_user.is_provider:
         patients = session.query(models.Patient).all()
-        return jsonify(patients)
-    # only show patients that have an appointment
-    elif current_user.is_provider:
-        patients = current_user.patients
         return jsonify(patients)
     else:
         abort(403)
@@ -40,7 +36,14 @@ def add_patient():
 @login_required
 @get_model_instance_by_id(models.Patient)
 def get_patient(patient):
-    return jsonify(patient)
+    if current_user.is_admin or current_user.is_provider:
+        return jsonify(patient)
+    elif current_user.is_patient and current_user.id == patient.id:
+        patient_data = patient.to_json()
+        patient_data['password'] = patient.password
+        return jsonify(patient_data)
+    else:
+        abort(403)
 
 @app.route('/patients/<id>', methods=['DELETE'])
 @login_required

@@ -10,17 +10,33 @@ def check_time_intersect(start_x, end_x, start_y, end_y):
     return (start_y <= start_x and start_x < end_y) or\
            (start_y < end_x and end_x <= end_y)
 
-def check_conflicts(src_appointment):
-    appointments = session.query(models.Appointment)\
-        .filter(models.Appointment.id != src_appointment.id)\
+def get_potential_conflicts(appointment):
+    return session.query(models.Appointment)\
+        .filter(models.Appointment.id != appointment.id)\
         .filter(sqlalchemy.or_(
-            models.Appointment._patient == src_appointment.patient,
-            models.Appointment._provider == src_appointment.provider))\
+            models.Appointment._patient == appointment.patient,
+            models.Appointment._provider == appointment.provider))\
         .all()
-    for appointment in appointments:
+
+def get_conflict_message(src, conflict):
+    if current_user.is_admin:
+        return "Appointment time slot has been taken already"
+    elif current_user.is_patient:
+        if src.provider == conflict.provider:
+            return "Provider {} has an appointment at this time".format(src.provider.name)
+        return "You have an appointment with provider {} at this time".format(src.provider.name)
+    else:
+        if src.patient == conflict.patient:
+            return "Patient {} has an appointment with provider {} at this time"\
+                .format(src.patient.name, src.provider.name)
+        return "You have an appointment with patient {} at this time".format(src.patient.name)
+
+
+def check_conflicts(src_appointment):
+    for appointment in get_potential_conflicts(src_appointment):
         if check_time_intersect(src_appointment.start_time, src_appointment.end_time,
                                 appointment.start_time, appointment.end_time):
-            raise ValueError('Appointment time slot has already been taken')
+            raise ValueError(get_conflict_message(src_appointment, appointment))
 
 @app.route('/appointments', methods=['GET'])
 @login_required
@@ -70,6 +86,7 @@ def patch_appointment(appointment):
         form_data['provider'] = get_model_by_id(models.Provider, provider_id)
     try:
         appointment.update_from_form(form_data)
+        appointment.validate_time()
         check_conflicts(appointment)
         session.commit()
         return jsonify(appointment)
