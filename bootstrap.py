@@ -9,9 +9,9 @@ class App(wx.App):
         return True
 
 if __name__ == '__main__':
-    # app = App(False)
-    # app.MainLoop()
-    start_servers_with_debug()
+    app = App(False)
+    app.MainLoop()
+    # start_servers_with_debug()
 
 
 
