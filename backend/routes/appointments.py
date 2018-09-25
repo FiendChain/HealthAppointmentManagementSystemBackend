@@ -23,13 +23,13 @@ def get_conflict_message(src, conflict):
         return "Appointment time slot has been taken already"
     elif current_user.is_patient:
         if src.provider == conflict.provider:
-            return "Provider {} has an appointment at this time".format(src.provider.name)
-        return "You have an appointment with provider {} at this time".format(src.provider.name)
+            return "Provider {} has an appointment at this time".format(conflict.provider.name)
+        return "You have an appointment with provider {} at this time".format(conflict.provider.name)
     else:
         if src.patient == conflict.patient:
             return "Patient {} has an appointment with provider {} at this time"\
-                .format(src.patient.name, src.provider.name)
-        return "You have an appointment with patient {} at this time".format(src.patient.name)
+                .format(conflict.patient.name, conflict.provider.name)
+        return "You have an appointment with patient {} at this time".format(conflict.patient.name)
 
 
 def check_conflicts(src_appointment):

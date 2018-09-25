@@ -4,8 +4,8 @@ import wx
 
 class App(wx.App):
     def OnInit(self):
-        TaskBarIcon()
         start_servers()
+        TaskBarIcon()
         return True
 
 if __name__ == '__main__':

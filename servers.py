@@ -30,6 +30,7 @@ def start_servers():
     backend_thread = threading.Thread(target=lambda: backend_app.run(**backend_deploy_config))
     backend_thread.setDaemon(True)
     frontend_thread = threading.Thread(target=lambda: frontend_app.run(**frontend_config))
+    frontend_thread.setDaemon(True)
     backend_thread.start()
     frontend_thread.start()
     return (backend_thread, frontend_thread)
